@@ -1,5 +1,7 @@
 use std::env;
 
+pub const SESSION_DURATION_DAYS: i64 = 7;
+
 #[derive(Clone, Debug)]
 pub struct Config {
     pub database_url: String,

@@ -1,11 +1,12 @@
 use sqlx::MySqlPool;
 use time::OffsetDateTime;
 use uuid::Uuid;
+use crate::config::SESSION_DURATION_DAYS;
 use crate::models::user::User;
 
 pub async fn create_session(pool: &MySqlPool, user_id: Uuid) -> Result<Uuid, sqlx::Error> {
     let session_id = Uuid::new_v4();
-    let expires_at = OffsetDateTime::now_utc() + time::Duration::days(7);
+    let expires_at = OffsetDateTime::now_utc() + time::Duration::days(SESSION_DURATION_DAYS);
     let session_id_bytes = session_id.as_bytes().to_vec();
     let user_id_bytes = user_id.as_bytes().to_vec();
     sqlx::query("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)")

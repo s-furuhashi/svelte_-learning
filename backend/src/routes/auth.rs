@@ -9,6 +9,7 @@ use tower_cookies::{Cookie, Cookies};
 use time::Duration;
 use crate::AppState;
 use crate::auth::session::{create_session, delete_session};
+use crate::config::SESSION_DURATION_DAYS;
 use crate::models::user::User;
 
 #[derive(Debug, Deserialize)]
@@ -47,7 +48,7 @@ pub async fn login(
     cookie.set_http_only(true);
     cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
     cookie.set_path("/");
-    cookie.set_max_age(Duration::days(7));
+    cookie.set_max_age(Duration::days(SESSION_DURATION_DAYS));
     if state.config.is_production {
         cookie.set_secure(true);
     }

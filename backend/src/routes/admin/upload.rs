@@ -15,13 +15,18 @@ pub async fn upload_image(
     while let Some(field) = multipart.next_field().await.map_err(|_| StatusCode::BAD_REQUEST)? {
         let name = field.name().unwrap_or("").to_string();
         if name == "file" {
+            let content_type = field
+                .content_type()
+                .map(|ct| ct.to_string())
+                .unwrap_or_default();
+            if !matches!(content_type.as_str(), "image/webp" | "image/jpeg" | "image/png" | "image/gif") {
+                return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
+            }
+
             let data = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
             let filename = format!("books/{}.webp", Uuid::new_v4());
 
-            let aws_config = aws_config::load_from_env().await;
-            let s3_client = aws_sdk_s3::Client::new(&aws_config);
-
-            s3_client
+            state.s3_client
                 .put_object()
                 .bucket(&state.config.aws_s3_bucket)
                 .key(&filename)

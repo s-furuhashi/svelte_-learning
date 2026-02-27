@@ -24,6 +24,7 @@ use config::Config;
 pub struct AppState {
     pub pool: MySqlPool,
     pub config: Config,
+    pub s3_client: aws_sdk_s3::Client,
 }
 
 #[tokio::main]
@@ -37,9 +38,13 @@ async fn main() {
     let config = Config::from_env();
     let pool = db::create_pool(&config.database_url).await;
 
+    let aws_config = aws_config::load_from_env().await;
+    let s3_client = aws_sdk_s3::Client::new(&aws_config);
+
     let state = AppState {
         pool,
         config: config.clone(),
+        s3_client,
     };
 
     let frontend_url = config.frontend_url.clone();
