@@ -19,7 +19,7 @@ pub async fn upload_image(
                 .content_type()
                 .map(|ct| ct.to_string())
                 .unwrap_or_default();
-            if !matches!(content_type.as_str(), "image/webp" | "image/jpeg" | "image/png" | "image/gif") {
+            if content_type.as_str() != "image/webp" {
                 return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
             }
 

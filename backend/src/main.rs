@@ -72,6 +72,7 @@ async fn main() {
         .route("/books/:slug", get(routes::books::get_book))
         .route("/login", post(routes::auth::login))
         .route("/logout", post(routes::auth::logout))
+        .route("/me", get(routes::auth::me))
         .nest("/admin", admin_router)
         .layer(CookieManagerLayer::new())
         .layer(cors)

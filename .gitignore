@@ -1,0 +1,6 @@
+.env
+.env.production
+backend/target/
+frontend/node_modules/
+frontend/build/
+frontend/.svelte-kit/

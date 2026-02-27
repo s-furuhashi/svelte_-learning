@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
 use time::Duration;
 use crate::AppState;
-use crate::auth::session::{create_session, delete_session};
+use crate::auth::session::{create_session, delete_session, get_user_by_session};
 use crate::config::SESSION_DURATION_DAYS;
 use crate::models::user::User;
 
@@ -55,6 +55,20 @@ pub async fn login(
     cookies.add(cookie);
 
     Ok(Json(json!({ "message": "logged in" })))
+}
+
+pub async fn me(
+    State(state): State<AppState>,
+    cookies: Cookies,
+) -> Result<Json<Value>, StatusCode> {
+    let session_id = cookies
+        .get("session_id")
+        .map(|c| c.value().to_string())
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+    let user = get_user_by_session(&state.pool, &session_id)
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+    Ok(Json(json!({ "email": user.email })))
 }
 
 pub async fn logout(
