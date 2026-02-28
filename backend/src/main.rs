@@ -55,7 +55,9 @@ async fn main() {
         .allow_credentials(true);
 
     let admin_router = Router::new()
+        .route("/articles", get(routes::admin::articles::list_articles))
         .route("/articles", post(routes::admin::articles::create_article))
+        .route("/articles/:id", get(routes::admin::articles::get_article_by_id))
         .route("/articles/:id", put(routes::admin::articles::update_article))
         .route("/articles/:id", delete(routes::admin::articles::delete_article))
         .route("/books", post(routes::admin::books::create_book))
