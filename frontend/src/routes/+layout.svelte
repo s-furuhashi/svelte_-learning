@@ -14,6 +14,10 @@
   </div>
 </nav>
 
-<main class="container mx-auto p-4">
+<main class="container mx-auto p-4 min-h-[calc(100vh-8rem)]">
   {@render children()}
 </main>
+
+<footer class="bg-gray-100 text-gray-500 text-sm text-center p-4 mt-8">
+  <p>© {new Date().getFullYear()} My HP. All rights reserved.</p>
+</footer>
