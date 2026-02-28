@@ -22,15 +22,28 @@ pub async fn get_user_by_session(pool: &MySqlPool, session_id: &str) -> Option<U
     let session_uuid = Uuid::parse_str(session_id).ok()?;
     let session_id_bytes = session_uuid.as_bytes().to_vec();
     let now = OffsetDateTime::now_utc();
+
+    // Fetch user only for a valid, non-expired session
     let row = sqlx::query_as::<_, User>(
-        "SELECT u.id, u.email, u.password_hash, u.created_at FROM users u JOIN sessions s ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > ?"
+        "SELECT u.id, u.email, u.password_hash, u.created_at FROM users u \
+         JOIN sessions s ON u.id = s.user_id WHERE s.id = ? AND s.expires_at > ?"
     )
-    .bind(session_id_bytes)
+    .bind(session_id_bytes.clone())
     .bind(now)
     .fetch_optional(pool)
     .await
-    .ok()??;
-    Some(row)
+    .ok()?;
+
+    if row.is_none() {
+        // Session not found or expired: purge any expired record for this ID
+        let _ = sqlx::query("DELETE FROM sessions WHERE id = ? AND expires_at <= ?")
+            .bind(session_id_bytes)
+            .bind(now)
+            .execute(pool)
+            .await;
+    }
+
+    row
 }
 
 pub async fn delete_session(pool: &MySqlPool, session_id: &str) -> Result<(), sqlx::Error> {
