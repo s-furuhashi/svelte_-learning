@@ -42,7 +42,9 @@ pub struct BookResponse {
     pub html: String,
     pub image_url: Option<String>,
     pub published: bool,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub created_at: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub updated_at: Option<OffsetDateTime>,
 }
 

@@ -37,7 +37,9 @@ pub struct AdminArticleResponse {
     pub markdown: String,
     pub html: String,
     pub published: bool,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub created_at: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub updated_at: Option<OffsetDateTime>,
 }
 
@@ -65,7 +67,9 @@ pub struct PublicArticleListResponse {
     pub id: String,
     pub title: String,
     pub slug: String,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub created_at: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub updated_at: Option<OffsetDateTime>,
 }
 
@@ -91,7 +95,9 @@ pub struct PublicArticleDetailResponse {
     pub title: String,
     pub slug: String,
     pub html: String,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub created_at: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub updated_at: Option<OffsetDateTime>,
 }
 

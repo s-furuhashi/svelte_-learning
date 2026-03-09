@@ -4,6 +4,7 @@
 
 <svelte:head>
   <title>{data.article.title}</title>
+  <meta name="description" content={data.description} />
 </svelte:head>
 
 <article class="py-8 max-w-3xl">
