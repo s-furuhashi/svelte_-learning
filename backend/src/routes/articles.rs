@@ -23,7 +23,7 @@ pub async fn list_articles(State(state): State<AppState>) -> Result<Json<Value>,
     })?;
 
     let responses: Vec<PublicArticleListResponse> = articles.into_iter().map(|a| a.into()).collect();
-    Ok(Json(json!(responses)))
+    Ok(Json(json!({ "articles": responses })))
 }
 
 pub async fn get_article(

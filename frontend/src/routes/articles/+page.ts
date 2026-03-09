@@ -1,9 +1,0 @@
-import { apiFetch } from '$lib/api';
-import type { PageLoad } from './$types';
-
-export const load: PageLoad = async ({ fetch }) => {
-  const res = await apiFetch('/articles', {}, fetch);
-  if (!res.ok) return { articles: [] };
-  const data = await res.json();
-  return { articles: data.articles || [] };
-};
