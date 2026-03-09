@@ -3,7 +3,7 @@ use axum::{
     Router,
 };
 use axum::middleware as axum_middleware;
-use sqlx::MySqlPool;
+use sqlx::SqlitePool;
 use std::net::SocketAddr;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::CorsLayer;
@@ -22,7 +22,7 @@ use config::Config;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub pool: MySqlPool,
+    pub pool: SqlitePool,
     pub config: Config,
     pub s3_client: aws_sdk_s3::Client,
 }
@@ -37,6 +37,11 @@ async fn main() {
 
     let config = Config::from_env();
     let pool = db::create_pool(&config.database_url).await;
+
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run database migrations");
 
     let aws_config = aws_config::load_from_env().await;
     let s3_client = aws_sdk_s3::Client::new(&aws_config);
