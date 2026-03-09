@@ -3,7 +3,7 @@ FROM rust:1-slim AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y pkg-config libssl-dev libsqlite3-dev && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -11,6 +11,7 @@ RUN cargo build --release
 RUN rm src/main.rs
 
 COPY src ./src
+COPY migrations ./migrations
 RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
@@ -18,10 +19,12 @@ FROM rust:1-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl3 ca-certificates libsqlite3-0 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/backend /app/backend
 COPY migrations ./migrations
+
+RUN mkdir -p /app/data
 
 EXPOSE 3000
 

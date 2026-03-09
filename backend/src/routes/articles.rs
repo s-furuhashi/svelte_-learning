@@ -5,7 +5,8 @@ use axum::{
 };
 use serde_json::{json, Value};
 use crate::AppState;
-use crate::models::article::{Article, PublicArticleListResponse, PublicArticleDetailResponse};
+use crate::models::article::{Article, ArticleListItem, ArticleDetail};
+use crate::utils::markdown::markdown_to_html;
 
 fn error_response(status: StatusCode, message: &str) -> (StatusCode, Json<Value>) {
     (status, Json(json!({ "error": message })))
@@ -13,7 +14,7 @@ fn error_response(status: StatusCode, message: &str) -> (StatusCode, Json<Value>
 
 pub async fn list_articles(State(state): State<AppState>) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let articles = sqlx::query_as::<_, Article>(
-        "SELECT id, title, slug, markdown, html, published, created_at, updated_at FROM articles WHERE published = true ORDER BY created_at DESC"
+        "SELECT id, slug, title, markdown, created_at FROM articles ORDER BY created_at DESC"
     )
     .fetch_all(&state.pool)
     .await
@@ -22,8 +23,8 @@ pub async fn list_articles(State(state): State<AppState>) -> Result<Json<Value>,
         error_response(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
     })?;
 
-    let responses: Vec<PublicArticleListResponse> = articles.into_iter().map(|a| a.into()).collect();
-    Ok(Json(json!({ "articles": responses })))
+    let items: Vec<ArticleListItem> = articles.into_iter().map(|a| a.into()).collect();
+    Ok(Json(json!(items)))
 }
 
 pub async fn get_article(
@@ -31,7 +32,7 @@ pub async fn get_article(
     Path(slug): Path<String>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let article = sqlx::query_as::<_, Article>(
-        "SELECT id, title, slug, markdown, html, published, created_at, updated_at FROM articles WHERE slug = ? AND published = true"
+        "SELECT id, slug, title, markdown, created_at FROM articles WHERE slug = ?"
     )
     .bind(&slug)
     .fetch_optional(&state.pool)
@@ -42,7 +43,13 @@ pub async fn get_article(
     })?
     .ok_or_else(|| error_response(StatusCode::NOT_FOUND, "Article not found"))?;
 
-    let response: PublicArticleDetailResponse = article.into();
+    let html = markdown_to_html(&article.markdown);
+    let response = ArticleDetail {
+        title: article.title,
+        slug: article.slug,
+        html,
+        created_at: article.created_at,
+    };
     Ok(Json(json!(response)))
 }
 

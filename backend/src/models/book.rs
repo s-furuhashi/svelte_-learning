@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Book {
-    pub id: Vec<u8>,
+    pub id: String,
     pub title: String,
     pub slug: String,
     pub markdown: String,
@@ -50,11 +50,8 @@ pub struct BookResponse {
 
 impl From<Book> for BookResponse {
     fn from(b: Book) -> Self {
-        let id = uuid::Uuid::from_slice(&b.id)
-            .map(|u| u.to_string())
-            .unwrap_or_default();
         BookResponse {
-            id,
+            id: b.id,
             title: b.title,
             slug: b.slug,
             markdown: b.markdown,

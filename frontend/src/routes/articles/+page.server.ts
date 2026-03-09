@@ -6,5 +6,5 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	const res = await fetch(`${apiBase}/articles`);
 	if (!res.ok) return { articles: [] };
 	const data = await res.json();
-	return { articles: data.articles || [] };
+	return { articles: Array.isArray(data) ? data : [] };
 };

@@ -1,23 +1,6 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./backend/migrations:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   backend:
     build:
       context: ./backend
@@ -26,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      DATABASE_URL: sqlite:/app/data/blog.db
       SESSION_SECRET: ${SESSION_SECRET}
       AWS_REGION: ${AWS_REGION}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
@@ -35,9 +18,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       IS_PRODUCTION: ${IS_PRODUCTION:-false}
       RUST_LOG: info
-    depends_on:
-      mysql:
-        condition: service_healthy
+    volumes:
+      - sqlite_data:/app/data
 
   frontend:
     build:
@@ -53,4 +35,4 @@ services:
       - backend
 
 volumes:
-  mysql_data:
+  sqlite_data:

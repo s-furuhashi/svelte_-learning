@@ -13,13 +13,12 @@ pub async fn create_book(
     State(state): State<AppState>,
     Json(payload): Json<CreateBookRequest>,
 ) -> Result<Json<Value>, StatusCode> {
-    let id = Uuid::new_v4();
-    let id_bytes = id.as_bytes().to_vec();
+    let id = Uuid::new_v4().to_string();
     let html = markdown_to_html(&payload.markdown);
     let published = payload.published.unwrap_or(false);
 
     sqlx::query("INSERT INTO books (id, title, slug, markdown, html, image_url, published) VALUES (?, ?, ?, ?, ?, ?, ?)")
-        .bind(&id_bytes)
+        .bind(&id)
         .bind(&payload.title)
         .bind(&payload.slug)
         .bind(&payload.markdown)
@@ -30,7 +29,7 @@ pub async fn create_book(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(json!({ "id": id.to_string(), "message": "created" })))
+    Ok(Json(json!({ "id": id, "message": "created" })))
 }
 
 pub async fn update_book(
@@ -38,13 +37,10 @@ pub async fn update_book(
     Path(id): Path<String>,
     Json(payload): Json<UpdateBookRequest>,
 ) -> Result<Json<Value>, StatusCode> {
-    let uuid = Uuid::parse_str(&id).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let id_bytes = uuid.as_bytes().to_vec();
-
     let book = sqlx::query_as::<_, Book>(
         "SELECT id, title, slug, markdown, html, image_url, published, created_at, updated_at FROM books WHERE id = ?"
     )
-    .bind(&id_bytes)
+    .bind(&id)
     .fetch_optional(&state.pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -62,14 +58,14 @@ pub async fn update_book(
     let new_image_url = payload.image_url.or(book.image_url);
     let new_published = payload.published.unwrap_or(book.published);
 
-    sqlx::query("UPDATE books SET title = ?, slug = ?, markdown = ?, html = ?, image_url = ?, published = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE books SET title = ?, slug = ?, markdown = ?, html = ?, image_url = ?, published = ?, updated_at = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) WHERE id = ?")
         .bind(&new_title)
         .bind(&new_slug)
         .bind(&new_markdown)
         .bind(&new_html)
         .bind(&new_image_url)
         .bind(new_published)
-        .bind(&id_bytes)
+        .bind(&id)
         .execute(&state.pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -81,11 +77,8 @@ pub async fn delete_book(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<Json<Value>, StatusCode> {
-    let uuid = Uuid::parse_str(&id).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let id_bytes = uuid.as_bytes().to_vec();
-
     sqlx::query("DELETE FROM books WHERE id = ?")
-        .bind(&id_bytes)
+        .bind(&id)
         .execute(&state.pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
